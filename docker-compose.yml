@@ -1,0 +1,71 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nome_do_projeto_postgres_db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+    volumes:
+      - nome_do_projeto_dbdata:/var/lib/postgresql/data
+
+    ports:
+      - "${DB_PORT:-5432}:5432"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - nome_do_projeto_network
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+
+    container_name: nome_do_projeto_laravel_app
+    restart: unless-stopped
+
+    working_dir: /var/www/html
+
+    volumes:
+      - ./backend:/var/www/html
+      - ./.env:/var/www/html/.env
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    networks:
+      - nome_do_projeto_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nome_do_projeto_nginx_proxy
+    restart: unless-stopped
+
+    ports:
+      - "8080:80"
+
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+
+    depends_on:
+      - app
+
+    networks:
+      - nome_do_projeto_network
+
+volumes:
+  nome_do_projeto_dbdata:
+
+networks:
+  nome_do_projeto_network:
+    driver: bridge
