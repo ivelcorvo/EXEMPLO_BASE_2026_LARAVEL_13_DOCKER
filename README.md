@@ -7,7 +7,6 @@ Este projeto é sistema feito em Laravel 13, Docker, PostgreSQL e Livewire
 - PostgreSQL 16
 - Nginx (alpine)
 - Docker Compose
-- Livewire 4
 
 A estrutura foi criada para fornecer um backend moderno.
 
